@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Managed - PR & Marketing</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .count-animation { animation: countUp 2s ease-out forwards; }
+        @keyframes countUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .hero-pattern { background-image: radial-gradient(circle at 25px 25px, rgba(255,255,255,0.1) 2px, transparent 0); background-size: 50px 50px; }
+        .glass-effect { backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { Mail, Phone, MapPin, Globe, MessageCircle, Users, Calendar, Award, Music } = lucide;
+
+        // Mock Backend API
+        class MockAPI {
+            constructor() {
+                this.data = {
+                    stats: { events: 150, artists: 45, countries: 25, team: 12 },
+                    artists: [
+                        {
+                            id: 1,
+                            name: "Sarah Williams",
+                            category: "singer",
+                            instagram: "https://instagram.com/sarahwilliams",
+                            facebook: "https://facebook.com/sarahwilliamsofficial",
+                            youtube: "https://youtube.com/watch?v=dQw4w9WgXcQ",
+                            image: "https://images.unsplash.com/photo-1494790108755-2616c55fdb72?w=400",
+                            awards: "Grammy Winner 2023, Billboard Artist of the Year"
+                        },
+                        {
+                            id: 2,
+                            name: "Marcus Chen",
+                            category: "actor",
+                            instagram: "https://instagram.com/marcuschen",
+                            facebook: "https://facebook.com/marcuschenactor",
+                            youtube: "https://youtube.com/watch?v=dQw4w9WgXcQ",
+                            image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+                            awards: "Oscar Nominee 2024, SAG Award Winner"
+                        },
+                        {
+                            id: 3,
+                            name: "Elena Rodriguez",
+                            category: "artist",
+                            instagram: "https://instagram.com/elenarodriguez",
+                            facebook: "https://facebook.com/elenarodriguezart",
+                            youtube: "https://youtube.com/watch?v=dQw4w9WgXcQ",
+                            image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400",
+                            awards: "Venice Biennale Featured Artist, Contemporary Art Award"
+                        },
+                        {
+                            id: 4,
+                            name: "David Thompson",
+                            category: "singer",
+                            instagram: "https://instagram.com/davidthompson",
+                            facebook: "https://facebook.com/davidthompsonmusic",
+                            youtube: "https://youtube.com/watch?v=dQw4w9WgXcQ",
+                            image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
+                            awards: "Platinum Album Certified, MTV Music Award"
+                        },
+                        {
+                            id: 5,
+                            name: "Sophia Martinez",
+                            category: "actor",
+                            instagram: "https://instagram.com/sophiamartinez",
+                            facebook: "https://facebook.com/sophiamartinezofficial",
+                            youtube: "https://youtube.com/watch?v=dQw4w9WgXcQ",
+                            image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
+                            awards: "Emmy Award Winner, Golden Globe Nominee"
+                        },
+                        {
+                            id: 6,
+                            name: "Alex Kim",
+                            category: "artist",
+                            instagram: "https://instagram.com/alexkim",
+                            facebook: "https://facebook.com/alexkimart",
+                            youtube: "https://youtube.com/watch?v=dQw4w9WgXcQ",
+                            image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+                            awards: "Modern Art Prize Winner, International Exhibition Featured"
+                        }
+                    ]
+                };
+                this.isAdmin = false;
+            }
+
+            async getStats() {
+                return new Promise(resolve => {
+                    setTimeout(() => resolve(this.data.stats), 500);
+                });
+            }
+
+            async getArtists() {
+                return new Promise(resolve => {
+                    setTimeout(() => resolve(this.data.artists), 300);
+                });
+            }
+
+            async updateStats(newStats) {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        this.data.stats = { ...this.data.stats, ...newStats };
+                        resolve(this.data.stats);
+                    }, 300);
+                });
+            }
+
+            async updateArtist(id, updatedArtist) {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        const index = this.data.artists.findIndex(a => a.id === id);
+                        if (index !== -1) {
+                            this.data.artists[index] = { ...this.data.artists[index], ...updatedArtist };
+                        }
+                        resolve(this.data.artists[index]);
+                    }, 300);
+                });
+            }
+
+            async deleteArtist(id) {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        this.data.artists = this.data.artists.filter(a => a.id !== id);
+                        resolve(true);
+                    }, 300);
+                });
+            }
+
+            async addArtist(artist) {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        const newArtist = { ...artist, id: Date.now() };
+                        this.data.artists.push(newArtist);
+                        resolve(newArtist);
+                    }, 300);
+                });
+            }
+
+            login(password) {
+                if (password === 'admin123') {
+                    this.isAdmin = true;
+                    return true;
+                }
+                return false;
+            }
+
+            logout() {
+                this.isAdmin = false;
+            }
+
+            isAuthenticated() {
+                return this.isAdmin;
+            }
+        }
+
+        const api = new MockAPI();
+
+        // Counter Animation Component
+        const AnimatedCounter = ({ end, duration = 2000, suffix = "" }) => {
+            const [count, setCount] = useState(0);
+            const [isVisible, setIsVisible] = useState(false);
+            const elementRef = useRef();
+
+            useEffect(() => {
+                const observer = new IntersectionObserver(
+                    ([entry]) => {
+                        if (entry.isIntersecting && !isVisible) {
+                            setIsVisible(true);
+                            let start = 0;
+                            const increment = end / (duration / 16);
+                            const timer = setInterval(() => {
+                                start += increment;
+                                if (start >= end) {
+                                    setCount(end);
+                                    clearInterval(timer);
+                                } else {
+                                    setCount(Math.floor(start));
+                                }
+                            }, 16);
+                        }
+                    },
+                    { threshold: 0.5 }
+                );
+
+                if (elementRef.current) {
+                    observer.observe(elementRef.current);
+                }
+
+                return () => observer.disconnect();
+            }, [end, duration, isVisible]);
+
+            return (
+                <span ref={elementRef} className="count-animation">
+                    {count}{suffix}
+                </span>
+            );
+        };
+
+        // Admin Panel Component
+        const AdminPanel = ({ onClose, onStatsUpdate, onArtistUpdate, stats, artists }) => {
+            const [activeTab, setActiveTab] = useState('stats');
+            const [statsForm, setStatsForm] = useState(stats);
+            const [selectedArtist, setSelectedArtist] = useState(null);
+            const [artistForm, setArtistForm] = useState({
+                name: '', category: 'singer', instagram: '', facebook: '', youtube: '', awards: '', image: ''
+            });
+
+            const handleStatsSubmit = async (e) => {
+                e.preventDefault();
+                await api.updateStats(statsForm);
+                onStatsUpdate(statsForm);
+                alert('Stats updated successfully!');
+            };
+
+            const handleArtistSubmit = async (e) => {
+                e.preventDefault();
+                if (selectedArtist) {
+                    await api.updateArtist(selectedArtist.id, artistForm);
+                } else {
+                    await api.addArtist(artistForm);
+                }
+                onArtistUpdate();
+                setSelectedArtist(null);
+                setArtistForm({ name: '', category: 'singer', instagram: '', facebook: '', youtube: '', awards: '', image: '' });
+                alert('Artist updated successfully!');
+            };
+
+            const handleDeleteArtist = async (id) => {
+                if (confirm('Are you sure you want to delete this artist?')) {
+                    await api.deleteArtist(id);
+                    onArtistUpdate();
+                    alert('Artist deleted successfully!');
+                }
+            };
+
+            const editArtist = (artist) => {
+                setSelectedArtist(artist);
+                setArtistForm(artist);
+                setActiveTab('artists');
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg w-full max-w-4xl max-h-full overflow-auto">
+                        <div className="p-6 border-b flex justify-between items-center">
+                            <h2 className="text-2xl font-bold">Admin Panel</h2>
+                            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                                <span className="text-2xl">&times;</span>
+                            </button>
+                        </div>
+
+                        <div className="flex border-b">
+                            <button 
+                                onClick={() => setActiveTab('stats')}
+                                className={`px-6 py-3 ${activeTab === 'stats' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600'}`}
+                            >
+                                Manage Stats
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('artists')}
+                                className={`px-6 py-3 ${activeTab === 'artists' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600'}`}
+                            >
+                                Manage Artists
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            {activeTab === 'stats' && (
+                                <form onSubmit={handleStatsSubmit} className="space-y-4">
+                                    <h3 className="text-lg font-semibold mb-4">Update Statistics</h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">Events</label>
+                                            <input
+                                                type="number"
+                                                value={statsForm.events}
+                                                onChange={(e) => setStatsForm({...statsForm, events: parseInt(e.target.value)})}
+                                                className="w-full border rounded px-3 py-2"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">Artists</label>
+                                            <input
+                                                type="number"
+                                                value={statsForm.artists}
+                                                onChange={(e) => setStatsForm({...statsForm, artists: parseInt(e.target.value)})}
+                                                className="w-full border rounded px-3 py-2"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">Countries</label>
+                                            <input
+                                                type="number"
+                                                value={statsForm.countries}
+                                                onChange={(e) => setStatsForm({...statsForm, countries: parseInt(e.target.value)})}
+                                                className="w-full border rounded px-3 py-2"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">Team Members</label>
+                                            <input
+                                                type="number"
+                                                value={statsForm.team}
+                                                onChange={(e) => setStatsForm({...statsForm, team: parseInt(e.target.value)})}
+                                                className="w-full border rounded px-3 py-2"
+                                            />
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                                        Update Stats
+                                    </button>
+                                </form>
+                            )}
+
+                            {activeTab === 'artists' && (
+                                <div>
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-semibold mb-4">
+                                            {selectedArtist ? 'Edit Artist' : 'Add New Artist'}
+                                        </h3>
+                                        <form onSubmit={handleArtistSubmit} className="space-y-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Name</label>
+                                                    <input
+                                                        type="text"
+                                                        value={artistForm.name}
+                                                        onChange={(e) => setArtistForm({...artistForm, name: e.target.value})}
+                                                        className="w-full border rounded px-3 py-2"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Category</label>
+                                                    <select
+                                                        value={artistForm.category}
+                                                        onChange={(e) => setArtistForm({...artistForm, category: e.target.value})}
+                                                        className="w-full border rounded px-3 py-2"
+                                                    >
+                                                        <option value="singer">Singer</option>
+                                                        <option value="actor">Actor</option>
+                                                        <option value="artist">Artist</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Instagram URL</label>
+                                                    <input
+                                                        type="url"
+                                                        value={artistForm.instagram}
+                                                        onChange={(e) => setArtistForm({...artistForm, instagram: e.target.value})}
+                                                        className="w-full border rounded px-3 py-2"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Facebook URL</label>
+                                                    <input
+                                                        type="url"
+                                                        value={artistForm.facebook}
+                                                        onChange={(e) => setArtistForm({...artistForm, facebook: e.target.value})}
+                                                        className="w-full border rounded px-3 py-2"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">YouTube URL</label>
+                                                    <input
+                                                        type="url"
+                                                        value={artistForm.youtube}
+                                                        onChange={(e) => setArtistForm({...artistForm, youtube: e.target.value})}
+                                                        className="w-full border rounded px-3 py-2"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Image URL</label>
+                                                    <input
+                                                        type="url"
+                                                        value={artistForm.image}
+                                                        onChange={(e) => setArtistForm({...artistForm, image: e.target.value})}
+                                                        className="w-full border rounded px-3 py-2"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">Awards & Achievements</label>
+                                                <textarea
+                                                    value={artistForm.awards}
+                                                    onChange={(e) => setArtistForm({...artistForm, awards: e.target.value})}
+                                                    className="w-full border rounded px-3 py-2 h-20"
+                                                />
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                                                    {selectedArtist ? 'Update Artist' : 'Add Artist'}
+                                                </button>
+                                                {selectedArtist && (
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => {
+                                                            setSelectedArtist(null);
+                                                            setArtistForm({ name: '', category: 'singer', instagram: '', facebook: '', youtube: '', awards: '', image: '' });
+                                                        }}
+                                                        className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600"
+                                                    >
+                                                        Cancel Edit
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                    <div>
+                                        <h3 className="text-lg font-semibold mb-4">Current Artists</h3>
+                                        <div className="grid gap-4">
+                                            {artists.map(artist => (
+                                                <div key={artist.id} className="border rounded p-4 flex justify-between items-center">
+                                                    <div>
+                                                        <h4 className="font-semibold">{artist.name}</h4>
+                                                        <p className="text-sm text-gray-600 capitalize">{artist.category}</p>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button 
+                                                            onClick={() => editArtist(artist)}
+                                                            className="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDeleteArtist(artist.id)}
+                                                            className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Login Modal Component
+        const LoginModal = ({ onClose, onLogin }) => {
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (api.login(password)) {
+                    onLogin();
+                    onClose();
+                } else {
+                    setError('Invalid password');
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-96">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold">Admin Login</h2>
+                            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                                <span className="text-2xl">&times;</span>
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium mb-2">Password</label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full border rounded px-3 py-2"
+                                    placeholder="Enter admin password"
+                                />
+                                {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+                                <p className="text-gray-500 text-xs mt-1">Hint: admin123</p>
+                            </div>
+                            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                                Login
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // Main App Component
+        const App = () => {
+            const [stats, setStats] = useState({ events: 0, artists: 0, countries: 0, team: 0 });
+            const [artists, setArtists] = useState([]);
+            const [showAdmin, setShowAdmin] = useState(false);
+            const [showLogin, setShowLogin] = useState(false);
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+            useEffect(() => {
+                loadData();
+            }, []);
+
+            const loadData = async () => {
+                const [statsData, artistsData] = await Promise.all([
+                    api.getStats(),
+                    api.getArtists()
+                ]);
+                setStats(statsData);
+                setArtists(artistsData);
+            };
+
+            const handleStatsUpdate = (newStats) => {
+                setStats(newStats);
+            };
+
+            const handleArtistUpdate = async () => {
+                const artistsData = await api.getArtists();
+                setArtists(artistsData);
+            };
+
+            const openAdmin = () => {
+                if (api.isAuthenticated()) {
+                    setShowAdmin(true);
+                } else {
+                    setShowLogin(true);
+                }
+            };
+
+            const handleLogin = () => {
+                setIsLoggedIn(true);
+                setShowAdmin(true);
+            };
+
+            const handleLogout = () => {
+                api.logout();
+                setIsLoggedIn(false);
+                setShowAdmin(false);
+            };
+
+            const categorizeArtists = (category) => {
+                return artists.filter(artist => artist.category === category);
+            };
+
+            const featuredArtists = artists.slice(0, 3);
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    {/* Navigation */}
+                    <nav className="bg-white shadow-lg sticky top-0 z-40">
+                        <div className="max-w-7xl mx-auto px-4">
+                            <div className="flex justify-between items-center py-4">
+                                <div className="flex items-center">
+                                    <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+                                        <Music className="text-white" size={24} />
+                                    </div>
+                                    <span className="ml-3 text-2xl font-bold text-gray-800">Artist Managed</span>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                    <button 
+                                        onClick={openAdmin}
+                                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                                    >
+                                        Admin Panel
+                                    </button>
+                                    {isLoggedIn && (
+                                        <button 
+                                            onClick={handleLogout}
+                                            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                                        >
+                                            Logout
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* Hero Section */}
+                    <section className="gradient-bg hero-pattern text-white py-20">
+                        <div className="max-w-7xl mx-auto px-4 text-center">
+                            <h1 className="text-5xl font-bold mb-6">
+                                Elevating Artists to Global Stardom
+                            </h1>
+                            <p className="text-xl mb-8 max-w-3xl mx-auto">
+                                Premier PR & Marketing agency specializing in artist management, brand building, and career acceleration across entertainment industries.
+                            </p>
+                            <div className="flex justify-center space-x-6">
+                                <button className="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                                    Discover Artists
+                                </button>
+                                <button className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition-colors">
+                                    Our Services
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* About Us Section */}
+                    <section className="py-16 bg-white">
+                        <div className="max-w-7xl mx-auto px-4">
+                            <div className="text-center mb-12">
+                                <h2 className="text-4xl font-bold text-gray-800 mb-6">About Artist Managed</h2>
+                                <div className="max-w-4xl mx-auto">
+                                    <p className="text-lg text-gray-600 mb-6">
+                                        Artist Managed is a cutting-edge PR & Marketing firm dedicated to transforming talented individuals into global superstars. With over a decade of experience in the entertainment industry, we specialize in comprehensive artist management, strategic brand development, and innovative marketing campaigns.
+                                    </p>
+                                    <p className="text-lg text-gray-600">
+                                        Our expertise spans across music, film, and visual arts, providing 360-degree support to our exclusive roster of artists. From social media strategy to international tour management, we craft personalized pathways to success for each artist we represent.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Live Stats Section */}
+                    <section className="py-16 gradient-bg text-white">
+                        <div className="max-w-7xl mx-auto px-4">
+                            <div className="text-center mb-12">
+                                <h2 className="text-4xl font-bold mb-6">Our Impact in Numbers</h2>
+                                <p className="text-xl opacity-90">Building success stories across the globe</p>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                                <div className="text-center glass-effect rounded-lg p-6">
+                                    <Calendar className="mx-auto mb-4" size={48} />
+                                    <div className="text-4xl font-bold mb-2">
+                                        <AnimatedCounter end={stats.events} suffix="+" />
+                                    </div>
+                                    <p className="text-lg opacity-90">Events Managed</p>
+                                </div>
+                                <div className="text-center glass-effect rounded-lg p-6">
+                                    <Users className="mx-auto mb-4" size={48} />
+                                    <div className="text-4xl font-bold mb-2">
+                                        <AnimatedCounter end={stats.artists} suffix="+" />
+                                    </div>
+                                    <p className="text-lg opacity-90">Artists Represented</p>
+                                </div>
+                                <div className="text-center glass-effect rounded-lg p-6">
+                                    <Globe className="mx-auto mb-4" size={48} />
+                                    <div className="text-4xl font-bold mb-2">
+                                        <AnimatedCounter end={stats.countries} suffix="+" />
+                                    </div>
+                                    <p className="text-lg opacity-90">Countries Reached</p>
+                                </div>
+                                <div className="text-center glass-effect rounded-lg p-6">
+                                    <Award className="mx-auto mb-4" size={48} />
+                                    <div className="text-4xl font-bold mb-2">
+                                        <AnimatedCounter end={stats.team} suffix="+" />
+                                    </div>
+                                    <p className="text-lg opacity-90">Team Members</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Exclusive Artists Section */}
+                    <section className="py-16 bg-gray-50">
+                        <div className="max-w-7xl mx-auto px-4">
+                            <div className="text-center mb-12">
+                                <h2 className="text-4xl font-bold text-gray-800 mb-6">#ExclusiveArtists</h2>
+                                <p className="text-xl text-gray-600">Discover our talented roster of exclusive artists</p>
+                            </div>
+
+                            {/* Category Tabs */}
+                            <div className="flex justify-center mb-12">
+                                <div className="bg-white rounded-lg p-2 shadow-lg">
+                                    <div className="flex space-x-2">
+                                        {['singers', 'actors', 'artists'].map(category => (
+                                            <div key={category} className="text-center">
+                                                <h3 className="text-lg font-semibold text-gray-800 capitalize mb-4">{category}</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                    {categorizeArtists(category.slice(0, -1)).map(artist => (
+                                                        <div key={artist.id} className="bg-white rounded-lg shadow-lg overflow-hidden card-hover">
+                                                            <img 
+                                                                src={artist.image} 
+                                                                alt={artist.name}
+                                                                className="w-full h-48 object-cover"
+                                                            />
+                                                            <div className="p-4">
+                                                                <h4 className="text-lg font-semibold mb-2">{artist.name}</h4>
+                                                                <p className="text-gray-600 capitalize mb-3">{artist.category}</p>
+                                                                <div className="flex space-x-3">
+                                                                    <a 
+                                                                        href={artist.instagram} 
+                                                                        target="_blank" 
+                                                                        className="text-pink-500 hover:text-pink-700 transition-colors"
+                                                                        title="Instagram"
+                                                                    >
+                                                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                                                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                                                        </svg>
+                                                                    </a>
+                                                                    <a 
+                                                                        href={artist.facebook} 
+                                                                        target="_blank" 
+                                                                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                                        title="Facebook"
+                                                                    >
+                                                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                                                        </svg>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Featured Artists Section */}
+                    <section className="py-16 bg-white">
+                        <div className="max-w-7xl mx-auto px-4">
+                            <div className="text-center mb-12">
+                                <h2 className="text-4xl font-bold text-gray-800 mb-6">Spotlight: Our Featured Artists</h2>
+                                <p className="text-xl text-gray-600">Celebrating achievements and breakthrough moments</p>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {featuredArtists.map(artist => (
+                                    <div key={artist.id} className="bg-white rounded-lg shadow-xl overflow-hidden card-hover">
+                                        <img 
+                                            src={artist.image} 
+                                            alt={artist.name}
+                                            className="w-full h-64 object-cover"
+                                        />
+                                        <div className="p-6">
+                                            <h3 className="text-xl font-bold mb-2">{artist.name}</h3>
+                                            <p className="text-gray-600 capitalize mb-4">{artist.category}</p>
+                                            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                                                <h4 className="font-semibold text-gray-800 mb-2">Awards & Recognition</h4>
+                                                <p className="text-sm text-gray-600">{artist.awards}</p>
+                                            </div>
+                                            <a 
+                                                href={artist.youtube} 
+                                                target="_blank"
+                                                className="inline-flex items-center bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                                            >
+                                                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                                </svg>
+                                                Watch Highlights
+                                            </a>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Contact Section */}
+                    <section className="py-16 gradient-bg text-white">
+                        <div className="max-w-7xl mx-auto px-4">
+                            <div className="text-center mb-12">
+                                <div className="flex justify-center mb-6">
+                                    <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                        <Music className="text-white" size={32} />
+                                    </div>
+                                </div>
+                                <h2 className="text-4xl font-bold mb-6">Get in Touch</h2>
+                                <p className="text-xl opacity-90 mb-8">Ready to elevate your artistic career? Let's connect!</p>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                <div className="text-center glass-effect rounded-lg p-6">
+                                    <Phone className="mx-auto mb-4" size={32} />
+                                    <h3 className="font-semibold mb-2">Call Us</h3>
+                                    <p className="opacity-90">+1 (555) 123-4567</p>
+                                </div>
+                                <div className="text-center glass-effect rounded-lg p-6">
+                                    <Mail className="mx-auto mb-4" size={32} />
+                                    <h3 className="font-semibold mb-2">Email</h3>
+                                    <p className="opacity-90">info@artistmanaged.com</p>
+                                </div>
+                                <div className="text-center glass-effect rounded-lg p-6">
+                                    <MapPin className="mx-auto mb-4" size={32} />
+                                    <h3 className="font-semibold mb-2">Address</h3>
+                                    <p className="opacity-90">123 Entertainment Ave<br/>Los Angeles, CA 90210</p>
+                                </div>
+                                <div className="text-center glass-effect rounded-lg p-6">
+                                    <Globe className="mx-auto mb-4" size={32} />
+                                    <h3 className="font-semibold mb-2">Website</h3>
+                                    <p className="opacity-90">artistmanaged.com</p>
+                                </div>
+                            </div>
+
+                            <div className="text-center mt-12">
+                                <h3 className="text-2xl font-bold mb-6">Follow Us</h3>
+                                <div className="flex justify-center space-x-6">
+                                    <a href="https://wa.me/15551234567" className="bg-green-500 p-3 rounded-full hover:bg-green-600 transition-colors">
+                                        <MessageCircle size={24} />
+                                    </a>
+                                    <a href="https://facebook.com/artistmanaged" className="bg-blue-600 p-3 rounded-full hover:bg-blue-700 transition-colors">
+                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                        </svg>
+                                    </a>
+                                    <a href="https://twitter.com/artistmanaged" className="bg-blue-400 p-3 rounded-full hover:bg-blue-500 transition-colors">
+                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Footer */}
+                    <footer className="bg-gray-900 text-white py-8">
+                        <div className="max-w-7xl mx-auto px-4 text-center">
+                            <div className="flex justify-center items-center mb-4">
+                                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center mr-3">
+                                    <Music className="text-white" size={20} />
+                                </div>
+                                <span className="text-xl font-bold">Artist Managed</span>
+                            </div>
+                            <p className="text-gray-400">&copy; 2025 Artist Managed. All rights reserved. Elevating artists worldwide.</p>
+                        </div>
+                    </footer>
+
+                    {/* Modals */}
+                    {showLogin && (
+                        <LoginModal 
+                            onClose={() => setShowLogin(false)} 
+                            onLogin={handleLogin}
+                        />
+                    )}
+
+                    {showAdmin && (
+                        <AdminPanel 
+                            onClose={() => setShowAdmin(false)}
+                            onStatsUpdate={handleStatsUpdate}
+                            onArtistUpdate={handleArtistUpdate}
+                            stats={stats}
+                            artists={artists}
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
